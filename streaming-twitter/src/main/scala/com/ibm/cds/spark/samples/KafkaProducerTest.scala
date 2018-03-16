@@ -36,20 +36,22 @@ import twitter4j.Status
 import twitter4j.StatusDeletionNotice
 import twitter4j.StatusListener
 import twitter4j.TwitterStreamFactory
+import twitter4j.TwitterStream
 import scala.util.parsing.json.JSON
 import java.io.InputStream
-import twitter4j.TwitterStream
 import com.ibm.cds.spark.samples.config.DemoConfig
-import org.apache.spark.Logging
+// import org.apache.spark.Logging
+import org.apache.log4j.Logger
 
 
 /**
  * @author dtaieb
  */
-object KafkaProducerTest extends Logging{
+object KafkaProducerTest {
   //Very verbose, enable only if necessary
   //Logger.getLogger("org.apache.kafka").setLevel(Level.ALL)
   //Logger.getLogger("kafka").setLevel(Level.ALL)
+  val log = Logger.getLogger(getClass.getName)
   
   var twitterStream : TwitterStream = _;
   
@@ -79,11 +81,13 @@ object KafkaProducerTest extends Logging{
       def onStatus(status: Status){
         if ( lastSent == 0 || System.currentTimeMillis() - lastSent > 200L){
           lastSent = System.currentTimeMillis()
-          logInfo("Got a status  " + status.getText )
+          // logInfo("Got a status  " + status.getText )
+          log.info("Got a status  " + status.getText )
           val producerRecord = new ProducerRecord(kafkaProps.getConfig(MessageHubConfig.KAFKA_TOPIC_TWEETS ), "tweet", status )
           try{
             val metadata = kafkaProducer.send( producerRecord ).get(2000, TimeUnit.SECONDS);
-            logInfo("Successfully sent record: Topic: " + metadata.topic + " Offset: " + metadata.offset )
+            // logInfo("Successfully sent record: Topic: " + metadata.topic + " Offset: " + metadata.offset )
+            log.info("Successfully sent record: Topic: " + metadata.topic + " Offset: " + metadata.offset )
           }catch{
             case e:Throwable => e.printStackTrace
           }
@@ -98,7 +102,8 @@ object KafkaProducerTest extends Logging{
       
       def onException( e: Exception){
         println("Unexpected error from twitterStream: " + e.getMessage);
-        logError(e.getMessage, e)
+        // logError(e.getMessage, e)
+        log.error(e.getMessage, e)
       }
       
       def onScrubGeo(lat: Long, long: Long ){

@@ -50,14 +50,17 @@ import org.apache.spark.streaming.scheduler.StreamingListenerReceiverStopped
 import org.apache.spark.streaming.scheduler.StreamingListenerReceiverError
 import org.apache.spark.streaming.scheduler.StreamingListenerReceiverStarted
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.Logging
+// import org.apache.spark.Logging
+import org.apache.log4j.Logger
+
 import java.util.Arrays
 
 /**
  * @author dtaieb
  * Twitter+Watson sample app with MessageHub/Kafka
  */
-object MessageHubStreamingTwitter extends Logging{
+object MessageHubStreamingTwitter {
+  val log = Logger.getLogger(getClass.getName)
   
   var ssc: StreamingContext = null
   val reuseCheckpoint = false;
@@ -70,7 +73,7 @@ object MessageHubStreamingTwitter extends Logging{
   
   //Logger.getLogger("org.apache.kafka").setLevel(Level.ALL)
   //Logger.getLogger("kafka").setLevel(Level.ALL)
-  Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+  // Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
   def main(args: Array[String]): Unit = {
     println("Printing arguments: ");
@@ -151,10 +154,12 @@ object MessageHubStreamingTwitter extends Logging{
                 if ( task != null ){
                   val producerRecord = new ProducerRecord[String,String](task._1, "tweet", task._2 )
                   val metadata = kafkaProducer.send( producerRecord ).get;
-                  logInfo("Sent record " + metadata.offset() + " Topic " + task._1)
+                  // logInfo("Sent record " + metadata.offset() + " Topic " + task._1)
+                  log.info("Sent record " + metadata.offset() + " Topic " + task._1)
                 }
             }catch{
-                case e:Throwable => logError(e.getMessage, e)
+                // case e:Throwable => logError(e.getMessage, e)
+                case e:Throwable => log.error(e.getMessage, e)
             }
           }
           queue.synchronized{
@@ -206,11 +211,11 @@ object MessageHubStreamingTwitter extends Logging{
       val sentiment = ToneAnalyzer.computeSentiment( client, status, broadcastVar )        
       var scoreMap : Map[String, Double] = Map()
       if ( sentiment != null ){
-        for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
-          for ( tone <- Option( toneCategory.tones ).getOrElse( Seq() ) ){
+        // for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
+          for ( tone <- Option( sentiment.tones ).getOrElse( Seq() ) ){
             scoreMap.put( tone.tone_id, (BigDecimal(tone.score).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble) * 100.0 )
           }
-        }
+        //}
       }
       
       EnrichedTweet( 
@@ -240,7 +245,8 @@ object MessageHubStreamingTwitter extends Logging{
 		   try{
 			   queue.notify
 		   }catch{
-		     case e:Throwable=>logError(e.getMessage, e)
+		     // case e:Throwable=>logError(e.getMessage, e)
+		     case e:Throwable=>log.error(e.getMessage, e)
 		   }
      }
    })
@@ -302,7 +308,8 @@ object MessageHubStreamingTwitter extends Logging{
          try{
            queue.notify
          }catch{
-           case e:Throwable=>logError(e.getMessage, e)
+           // case e:Throwable=>logError(e.getMessage, e)
+           case e:Throwable=>log.error(e.getMessage, e)
          }
        }
      }
@@ -322,7 +329,8 @@ object MessageHubStreamingTwitter extends Logging{
   }
 }
 
-object TweetsMetricJsonSerializer extends Logging{
+object TweetsMetricJsonSerializer {
+  val log = Logger.getLogger(getClass.getName)
   def serialize(value: Seq[(String,Long)] ): String = {   
     val sb = new StringBuilder("[")
     var comma = ""
@@ -331,12 +339,14 @@ object TweetsMetricJsonSerializer extends Logging{
       comma=","
     })
     sb.append("]")
-    logInfo("Serialized json: " + sb)
+    // logInfo("Serialized json: " + sb)
+    log.info("Serialized json: " + sb)
     sb.toString()
   }
 }
 
-object ToneScoreJsonSerializer extends Logging{
+object ToneScoreJsonSerializer {
+  val log = Logger.getLogger(getClass.getName)
   def serializeList[U:ClassTag]( label: String, value: List[U] ):String = {
     val sb = new StringBuilder("[\"" + label.replaceAll("\"", "") + "\"")
     value.foreach { item => {
@@ -364,7 +374,8 @@ object ToneScoreJsonSerializer extends Logging{
       comma=","
     })
     sb.append("]")
-    logInfo("Serialized size: " + value.size + ". Tone json: " + sb)
+    // logInfo("Serialized size: " + value.size + ". Tone json: " + sb)
+    log.info("Serialized size: " + value.size + ". Tone json: " + sb)
     sb.toString()
   }
 }

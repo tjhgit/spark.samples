@@ -19,7 +19,7 @@ package com.ibm.cds.spark.samples
 
 import scala.collection.mutable._
 import com.ibm.pixiedust.ChannelReceiver
-import org.apache.spark.Logging
+// import org.apache.spark.Logging
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 import org.apache.spark.SparkContext
@@ -49,7 +49,8 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.HashPartitioner
 import twitter4j.Status
-import org.codehaus.jettison.json.JSONObject
+// import org.codehaus.jettison.json.JSONObject
+import org.json.JSONObject
 import org.apache.spark.AccumulableParam
 import org.apache.spark.streaming.StreamingContextState
 import org.apache.spark.sql.DataFrame
@@ -57,7 +58,7 @@ import org.apache.spark.sql.DataFrame
 /* @author dtaieb
  * Twitter+Watson sentiment analysis app powered by Pixiedust
  */
-object PixiedustStreamingTwitter extends ChannelReceiver() with Logging{
+object PixiedustStreamingTwitter extends ChannelReceiver() {
   var ssc: StreamingContext = null
   var workingRDD: RDD[Row] = null
   //Hold configuration key/value pairs
@@ -222,11 +223,11 @@ object PixiedustStreamingTwitter extends ChannelReceiver() with Logging{
       val sentiment = ToneAnalyzer.computeSentiment( client, status, broadcastVar )
       var scoreMap : Map[String, Double] = Map()
       if ( sentiment != null ){
-        for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
-          for ( tone <- Option( toneCategory.tones ).getOrElse( Seq() ) ){
+        // for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
+          for ( tone <- Option( sentiment.tones ).getOrElse( Seq() ) ){
             scoreMap.put( tone.tone_id, (BigDecimal(tone.score).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble) * 100.0 )
           }
-        }
+        // }
       }
       
       var jsonSentiment="{";

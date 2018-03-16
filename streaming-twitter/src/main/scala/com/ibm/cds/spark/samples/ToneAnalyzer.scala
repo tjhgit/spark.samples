@@ -11,15 +11,19 @@ import org.http4s.Method
 import org.http4s.headers.Authorization
 import org.apache.log4j.Logger
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.Logging
-import scala.util.parsing.json.JSON
-import org.codehaus.jettison.json.JSONObject
+// import org.apache.spark.Logging
+import org.apache.log4j.Logger
+// import scala.util.parsing.json.JSON
+// import org.codehaus.jettison.json.JSONObject
+import org.json.JSONObject
+import scala.util.parsing.json._
 
 /**
  * @author dtaieb
  */
 
-object ToneAnalyzer extends Logging{
+object ToneAnalyzer {
+  val log = Logger.getLogger(getClass.getName)
   
   val sentimentFactors = Array(
       ("Anger","anger"),
@@ -38,9 +42,11 @@ object ToneAnalyzer extends Logging{
   )
   
   //Class models for Sentiment JSON
-  case class DocumentTone( document_tone: Sentiment )
-  case class Sentiment(tone_categories: Seq[ToneCategory]);
-  case class ToneCategory(category_id: String, category_name: String, tones: Seq[Tone]);
+  // case class DocumentTone( document_tone: Sentiment )
+  // case class Sentiment(tone_categories: Seq[ToneCategory]);
+  // case class ToneCategory(category_id: String, category_name: String, tones: Seq[Tone]);
+  case class DocumentTone(document_tone: ToneCategory)
+  case class ToneCategory(tones: Seq[Tone]);
   case class Tone(score: Double, tone_id: String, tone_name: String)
 //  case class Sentiment( scorecard: String, children: Seq[Tone] )
 //  case class Tone( name: String, id: String, children: Seq[ToneResult])
@@ -48,10 +54,11 @@ object ToneAnalyzer extends Logging{
 //  case class LinguisticEvidence( evidence_score: Double, word_count: Double, correlation: String, words : Seq[String])
   
   case class Geo( lat: Double, long: Double )
-  case class Tweet(author: String, date: String, language: String, text: String, geo : Geo, sentiment : Sentiment )
+  case class Tweet(author: String, date: String, language: String, text: String, geo : Geo, sentiment : ToneCategory)
  
-  def computeSentiment( client: Client, status:StatusAdapter, broadcastVar: Broadcast[Map[String,String]] ) : Sentiment = {
-    logTrace("Calling sentiment from Watson Tone Analyzer: " + status.text)
+  def computeSentiment( client: Client, status:StatusAdapter, broadcastVar: Broadcast[Map[String,String]] ) : ToneCategory = {
+    // logTrace("Calling sentiment from Watson Tone Analyzer: " + status.text)
+    log.trace("Calling sentiment from Watson Tone Analyzer: " + status.text)
     try{
       //Get Sentiment on the tweet
       val sentimentResults: String = 

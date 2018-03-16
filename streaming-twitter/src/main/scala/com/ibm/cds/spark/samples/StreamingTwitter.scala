@@ -46,7 +46,7 @@ import com.google.common.base.CharMatcher
 import scala.math.BigDecimal
 import com.ibm.cds.spark.samples.config.DemoConfig
 import com.ibm.cds.spark.samples.ToneAnalyzer.ToneCategory
-import org.apache.spark.Logging
+// import org.apache.spark.Logging
 
 
 
@@ -54,7 +54,8 @@ import org.apache.spark.Logging
 /**
  * @author dtaieb
  */
-object StreamingTwitter extends Logging{
+object StreamingTwitter {
+  val log = Logger.getLogger(getClass.getName)
   var ssc: StreamingContext = null
   var sqlContext: SQLContext = null
   var workingRDD: RDD[Row] = null
@@ -152,11 +153,11 @@ object StreamingTwitter extends Logging{
         
         var scoreMap : Map[String, Double] = Map()
         if ( sentiment != null ){
-          for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
-            for ( tone <- Option( toneCategory.tones ).getOrElse( Seq() ) ){
+          // for( toneCategory <- Option(sentiment.tone_categories).getOrElse( Seq() )){
+            for ( tone <- Option( sentiment.tones ).getOrElse( Seq() ) ){
               scoreMap.put( tone.tone_id, tone.score )
             }
-          }
+          // }
         }
              
         colValues = colValues ++ ToneAnalyzer.sentimentFactors.map { f => (BigDecimal(scoreMap.get(f._2).getOrElse(0.0)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble) * 100.0  }
@@ -199,14 +200,16 @@ object StreamingTwitter extends Logging{
           }
         }catch{
           case e: InterruptedException=>//Ignore
-          case e: Exception => logError(e.getMessage, e )
+          // case e: Exception => logError(e.getMessage, e )
+          case e: Exception => log.error(e.getMessage, e )
         }finally{
             canStopTwitterStream = true
         }        
       })
 
     }catch{
-      case e : Exception => logError(e.getMessage, e )
+      // case e : Exception => logError(e.getMessage, e )
+      case e : Exception => log.error(e.getMessage, e )
       return
     }
     ssc.start()
@@ -239,7 +242,7 @@ object StreamingTwitter extends Logging{
     }
   }
   
-  def saveTweetToCloudant(client: Client, db: CouchDbApi, status:Status, sentiment: ToneAnalyzer.Sentiment) : Status = {    
+  def saveTweetToCloudant(client: Client, db: CouchDbApi, status:Status, sentiment: ToneAnalyzer.ToneCategory) : Status = {    
     if ( db != null){
       logger.trace("Creating new Tweet in Couch Database " + status.getText())
       val task:Task[Res.DocOk] = db.docs.create( 
@@ -258,7 +261,8 @@ object StreamingTwitter extends Logging{
       
       // Execute the actions and process the result
       task.attemptRun match {
-        case -\/(e) => logError(e.getMessage, e );
+        // case -\/(e) => logError(e.getMessage, e );
+        case -\/(e) => log.error(e.getMessage, e );
         case \/-(a) => logger.trace("Successfully create new Tweet in Couch Database " + status.getText() )
       }
     }
@@ -282,7 +286,8 @@ object StreamingTwitter extends Logging{
       
       (sqlContext, df)
     }catch{
-      case e: Exception => {logError(e.getMessage, e ); return null}
+      // case e: Exception => {logError(e.getMessage, e ); return null}
+      case e: Exception => {log.error(e.getMessage, e ); return null}
     }
   }
  
